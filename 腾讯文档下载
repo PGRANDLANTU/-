@@ -1,0 +1,47 @@
+//https://docs.qq.com/dop-api/opendoc?
+const axios = require("axios")
+const fs = require("fs")
+
+function finds(arr, x, y) {
+    for (const item of arr) {
+        if (item["x"] === x && item["y"] === y) return String(item["data"]).replace(/[\r\n]/g,"###")
+    }
+    return ""
+}
+
+async function test() {
+    //let json_ = await axios.get("https://docs.qq.com/dop-api/opendoc?tab=pau7h0&id=DTVlEc2ZmdERvb0JB&normal=1&outformat=1&startrow=0&endrow=60000&wb=1&nowb=0&callback=")
+    let json_ = await axios.get("https://docs.qq.com/dop-api/opendoc?tab=BB08J2&id=DRk9nUGNkdVliRGpk&normal=1&outformat=1&startrow=0&endrow=60&wb=1&nowb=0")
+    // let json_ = await axios.get("https://docs.qq.com/dop-api/opendoc?tab=BB08J2&id=DRk9nUGNkdVliRGpk&normal=1&outformat=1&startrow=0&endrow=60000&wb=1&nowb=0&callback=")
+    let jd = json_.data
+    // fs.writeFileSync('./test.txt', JSON.stringify(json_.data))
+    //let obj = jd["clientVars"]["collab_client_vars"]["initialAttributedText"]["text"][0][3][0]["c"][1]
+    let obj = jd["clientVars"]["collab_client_vars"]["initialAttributedText"]["text"][0][3][0]["c"][1]
+    const keys = Object.keys(obj)
+    let arr = []
+    let max_x = 0, max_y = 0
+    let maxCol=jd["clientVars"]["collab_client_vars"]["maxCol"]
+
+    for (const item of keys) {
+        let index_x = parseInt(item) % maxCol
+        let index_y = Math.ceil(parseInt(item) / maxCol)
+        if (!obj[item]["2"]) continue
+        max_x = Math.max(max_x, index_x)
+        max_y = Math.max(max_y, index_y)
+        console.log(obj[item]["2"][1])
+        arr.push({x: index_x, y: index_y, data: String( obj[item]["2"][1]).replace(/,/g,'，')})
+        // console.log(obj[item],obj[item]["8"]||"")
+    }
+
+    let content = ""
+    for (let y = 0; y < max_y; y++) {
+        let hx = []
+        for (let x = 0; x < max_x; x++) {
+            hx.push('\ufeff'+finds(arr, x, y))
+        }
+        content+=hx.join(",")+"\n"
+    }
+    fs.writeFileSync('./test.csv', content)
+}
+
+test()
